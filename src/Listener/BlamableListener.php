@@ -6,6 +6,7 @@ declare(strict_types=1);
 
 namespace Hostnet\Component\EntityBlamable\Listener;
 
+use Hostnet\Component\EntityBlamable\Attributes\Blamable;
 use Hostnet\Component\EntityBlamable\BlamableInterface;
 use Hostnet\Component\EntityBlamable\Provider\BlamableProviderInterface;
 use Hostnet\Component\EntityBlamable\Resolver\BlamableResolverInterface;
@@ -30,6 +31,11 @@ class BlamableListener
     private $provider;
 
     /**
+     * Caches the class names to prevent iterating over attribute and annotations again on the next entity.
+     */
+    private array $is_blamable_cache = [];
+
+    /**
      * @param BlamableResolverInterface $resolver
      * @param BlamableProviderInterface $provider
      */
@@ -44,12 +50,11 @@ class BlamableListener
     /**
      * @param EntityChangedEvent $event
      */
-    public function entityChanged(EntityChangedEvent $event)
+    public function entityChanged(EntityChangedEvent $event): void
     {
-        $entity     = $event->getCurrentEntity();
-        $annotation = $this->resolver->getBlamableAnnotation($event->getEntityManager(), $entity);
+        $entity = $event->getCurrentEntity();
 
-        if (null === $annotation || !$entity instanceof BlamableInterface) {
+        if (!$this->isBlamable($event->getEntityManager(), $entity)) {
             return;
         }
 
@@ -63,5 +68,43 @@ class BlamableListener
             // new entity, also fill in created at
             $entity->setCreatedAt($changed_at);
         }
+    }
+
+    private function isBlamable($em, $entity): bool
+    {
+        $class = get_class($entity);
+        if (array_key_exists($class, $this->is_blamable_cache)) {
+            return $this->is_blamable_cache[$class];
+        }
+
+        if (!($entity instanceof BlamableInterface)) {
+            $this->is_blamable_cache[$class] = false;
+
+            return false;
+        }
+
+        if (null !== $this->resolver->getBlamableAnnotation($em, $entity)) {
+            $this->is_blamable_cache[$class] = true;
+
+            return true;
+        }
+
+        if ($this->hasBlamableAttribute($entity)) {
+            $this->is_blamable_cache[$class] = true;
+
+            return true;
+        }
+
+        $this->is_blamable_cache[$class] = false;
+
+        return false;
+    }
+
+    private function hasBlamableAttribute($entity): bool
+    {
+        $reflection = new \ReflectionClass($entity);
+        $attributes = $reflection->getAttributes(Blamable::class);
+
+        return !empty($attributes);
     }
 }

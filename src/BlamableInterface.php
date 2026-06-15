@@ -8,6 +8,8 @@ namespace Hostnet\Component\EntityBlamable;
 
 /**
  * Implement on Entities to trigger the BlamableEntityListener
+ *
+ * @TODO: add (return)typehints on next BC break, when removing doctrine/annotations
  */
 interface BlamableInterface
 {

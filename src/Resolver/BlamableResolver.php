@@ -7,15 +7,11 @@ declare(strict_types=1);
 namespace Hostnet\Component\EntityBlamable\Resolver;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Hostnet\Component\EntityBlamable\Blamable;
 use Hostnet\Component\EntityTracker\Provider\EntityAnnotationMetadataProvider;
 
 class BlamableResolver implements BlamableResolverInterface
 {
-    /**
-     * @var string
-     */
-    private $annotation = 'Hostnet\Component\EntityBlamable\Blamable';
-
     /**
      * @var EntityAnnotationMetadataProvider
      */
@@ -31,9 +27,11 @@ class BlamableResolver implements BlamableResolverInterface
 
     /**
      * @see \Hostnet\Component\EntityBlamable\Resolver\BlamableResolverInterface::getBlamableAnnotation()
+     *
+     * @deprecated Please use the attribute instead.
      */
     public function getBlamableAnnotation(EntityManagerInterface $em, $entity)
     {
-        return $this->provider->getAnnotationFromEntity($em, $entity, $this->annotation);
+        return $this->provider->getAnnotationFromEntity($em, $entity, Blamable::class);
     }
 }
