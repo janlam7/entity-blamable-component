@@ -6,7 +6,8 @@ declare(strict_types=1);
 
 namespace Hostnet\Component\EntityBlamable\Listener;
 
-use Hostnet\Component\EntityBlamable\Blamable;
+use Hostnet\Component\EntityBlamable\Attributes\Blamable;
+use Hostnet\Component\EntityBlamable\Blamable as BlamableAnnotation;
 use Hostnet\Component\EntityTracker\Event\EntityChangedEvent;
 use PHPUnit\Framework\TestCase;
 
@@ -68,7 +69,7 @@ class BlamableListenerTest extends TestCase
         $this->resolver
             ->expects($this->once())
             ->method('getBlamableAnnotation')
-            ->willReturn(new Blamable());
+            ->willReturn(new BlamableAnnotation());
 
         $event    = new EntityChangedEvent($this->em, $this->entity, new \stdClass(), []);
         $listener = new BlamableListener($this->resolver, $this->provider);
@@ -108,7 +109,7 @@ class BlamableListenerTest extends TestCase
         $this->resolver
             ->expects($this->once())
             ->method('getBlamableAnnotation')
-            ->willReturn(new Blamable());
+            ->willReturn(new BlamableAnnotation());
 
         $event    = new EntityChangedEvent($this->em, $this->entity, null, []);
         $listener = new BlamableListener($this->resolver, $this->provider);
@@ -134,6 +135,11 @@ class BlamableListenerTest extends TestCase
             ->expects($this->once())
             ->method('getBlamableAnnotation')
             ->willReturn(null);
+
+        $this->resolver
+            ->expects($this->once())
+            ->method('getBlamableAttribute')
+            ->willReturn(new Blamable());
 
         $entity = new EntityWithAttribute();
         $event  = new EntityChangedEvent($this->em, $entity, null, []);
@@ -163,6 +169,11 @@ class BlamableListenerTest extends TestCase
         $this->resolver
             ->expects($this->once())
             ->method('getBlamableAnnotation')
+            ->willReturn(null);
+
+        $this->resolver
+            ->expects($this->once())
+            ->method('getBlamableAttribute')
             ->willReturn(null);
 
         $entity = new EntityWithInterfaceOnly();

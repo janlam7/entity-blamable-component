@@ -6,11 +6,14 @@ declare(strict_types=1);
 
 namespace Hostnet\Component\EntityBlamable\Listener;
 
-use Hostnet\Component\EntityBlamable\Attributes\Blamable;
+use Doctrine\Persistence\ObjectManager;
 use Hostnet\Component\EntityBlamable\BlamableInterface;
 use Hostnet\Component\EntityBlamable\Provider\BlamableProviderInterface;
 use Hostnet\Component\EntityBlamable\Resolver\BlamableResolverInterface;
 use Hostnet\Component\EntityTracker\Event\EntityChangedEvent;
+use Psr\Cache\CacheItemInterface;
+use Psr\Cache\CacheItemPoolInterface;
+use Symfony\Component\Cache\Adapter\ArrayAdapter;
 
 /**
  * Listens to "Events::entityChanged"
@@ -20,31 +23,11 @@ use Hostnet\Component\EntityTracker\Event\EntityChangedEvent;
  */
 class BlamableListener
 {
-    /**
-     * @var BlamableResolverInterface
-     */
-    private $resolver;
-
-    /**
-     * @var BlamableProviderInterface
-     */
-    private $provider;
-
-    /**
-     * Caches the class names to prevent iterating over attribute and annotations again on the next entity.
-     */
-    private array $is_blamable_cache = [];
-
-    /**
-     * @param BlamableResolverInterface $resolver
-     * @param BlamableProviderInterface $provider
-     */
     public function __construct(
-        BlamableResolverInterface $resolver,
-        BlamableProviderInterface $provider
+        private BlamableResolverInterface $resolver,
+        private BlamableProviderInterface $provider,
+        private CacheItemPoolInterface $is_blamable_cache = new ArrayAdapter()
     ) {
-        $this->resolver = $resolver;
-        $this->provider = $provider;
     }
 
     /**
@@ -70,41 +53,35 @@ class BlamableListener
         }
     }
 
-    private function isBlamable($em, $entity): bool
+    private function isBlamable(ObjectManager $em, mixed $entity): bool
     {
-        $class = get_class($entity);
-        if (array_key_exists($class, $this->is_blamable_cache)) {
-            return $this->is_blamable_cache[$class];
+        $cache_key   = base64_encode('BLAMABLE-' . get_class($entity));
+        $cached_item = $this->is_blamable_cache->getItem($cache_key);
+
+        if ($cached_item->isHit()) {
+            return $cached_item->get();
         }
 
         if (!($entity instanceof BlamableInterface)) {
-            $this->is_blamable_cache[$class] = false;
-
-            return false;
+            return $this->save($cached_item, false);
         }
 
         if (null !== $this->resolver->getBlamableAnnotation($em, $entity)) {
-            $this->is_blamable_cache[$class] = true;
-
-            return true;
+            return $this->save($cached_item, true);
         }
 
-        if ($this->hasBlamableAttribute($entity)) {
-            $this->is_blamable_cache[$class] = true;
-
-            return true;
+        if (null !== $this->resolver->getBlamableAttribute($em, $entity)) {
+            return $this->save($cached_item, true);
         }
 
-        $this->is_blamable_cache[$class] = false;
-
-        return false;
+        return $this->save($cached_item, false);
     }
 
-    private function hasBlamableAttribute($entity): bool
+    private function save(CacheItemInterface $item, bool $value): bool
     {
-        $reflection = new \ReflectionClass($entity);
-        $attributes = $reflection->getAttributes(Blamable::class);
+        $item->set($value);
+        $this->is_blamable_cache->save($item);
 
-        return !empty($attributes);
+        return $value;
     }
 }
