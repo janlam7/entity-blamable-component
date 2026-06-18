@@ -9,21 +9,12 @@ namespace Hostnet\Component\EntityBlamable\Resolver;
 use Doctrine\ORM\EntityManagerInterface;
 use Hostnet\Component\EntityBlamable\Attributes\Blamable;
 use Hostnet\Component\EntityBlamable\Blamable as BlamabeAnnotation;
-use Hostnet\Component\EntityTracker\Provider\EntityAnnotationMetadataProvider;
+use Hostnet\Component\EntityTracker\Provider\EntityMetadataProvider;
 
 class BlamableResolver implements BlamableResolverInterface
 {
-    /**
-     * @var EntityAnnotationMetadataProvider
-     */
-    private $provider;
-
-    /**
-     * @param EntityAnnotationMetadataProvider $provider
-     */
-    public function __construct(EntityAnnotationMetadataProvider $provider)
+    public function __construct(private EntityMetadataProvider $provider)
     {
-        $this->provider = $provider;
     }
 
     /**
