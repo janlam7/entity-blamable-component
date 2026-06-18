@@ -6,7 +6,8 @@ declare(strict_types=1);
 
 namespace Hostnet\Component\EntityBlamable\Listener;
 
-use Hostnet\Component\EntityBlamable\Blamable;
+use Hostnet\Component\EntityBlamable\Attributes\Blamable;
+use Hostnet\Component\EntityBlamable\Blamable as BlamableAnnotation;
 use Hostnet\Component\EntityTracker\Event\EntityChangedEvent;
 use PHPUnit\Framework\TestCase;
 
@@ -68,7 +69,7 @@ class BlamableListenerTest extends TestCase
         $this->resolver
             ->expects($this->once())
             ->method('getBlamableAnnotation')
-            ->willReturn(new Blamable());
+            ->willReturn(new BlamableAnnotation());
 
         $event    = new EntityChangedEvent($this->em, $this->entity, new \stdClass(), []);
         $listener = new BlamableListener($this->resolver, $this->provider);
@@ -108,10 +109,87 @@ class BlamableListenerTest extends TestCase
         $this->resolver
             ->expects($this->once())
             ->method('getBlamableAnnotation')
-            ->willReturn(new Blamable());
+            ->willReturn(new BlamableAnnotation());
 
         $event    = new EntityChangedEvent($this->em, $this->entity, null, []);
         $listener = new BlamableListener($this->resolver, $this->provider);
         $listener->entityChanged($event);
+    }
+
+    public function testOnEntityChangedNewEntityWithAttribute(): void
+    {
+        $at = new \DateTime();
+        $by = 'henk';
+
+        $this->provider
+            ->expects($this->once())
+            ->method('getChangedAt')
+            ->willReturn($at);
+
+        $this->provider
+            ->expects($this->once())
+            ->method('getUpdatedBy')
+            ->willReturn($by);
+
+        $this->resolver
+            ->expects($this->once())
+            ->method('getBlamableAnnotation')
+            ->willReturn(null);
+
+        $this->resolver
+            ->expects($this->once())
+            ->method('getBlamableAttribute')
+            ->willReturn(new Blamable());
+
+        $entity = new EntityWithAttribute();
+        $event  = new EntityChangedEvent($this->em, $entity, null, []);
+
+        $this->assertNull($entity->getCreatedAt());
+        $this->assertNull($entity->getUpdatedBy());
+        $this->assertNull($entity->getUpdatedAt());
+
+        $listener = new BlamableListener($this->resolver, $this->provider);
+        $listener->entityChanged($event);
+
+        $this->assertSame($at, $entity->getCreatedAt());
+        $this->assertSame($by, $entity->getUpdatedBy());
+        $this->assertSame($at, $entity->getUpdatedAt());
+    }
+
+    public function testOnEntityChangedNewEntityWithInterfaceOnly(): void
+    {
+        $this->provider
+            ->expects($this->never())
+            ->method('getChangedAt');
+
+        $this->provider
+            ->expects($this->never())
+            ->method('getUpdatedBy');
+
+        $this->resolver
+            ->expects($this->once())
+            ->method('getBlamableAnnotation')
+            ->willReturn(null);
+
+        $this->resolver
+            ->expects($this->once())
+            ->method('getBlamableAttribute')
+            ->willReturn(null);
+
+        $entity = new EntityWithInterfaceOnly();
+        $event  = new EntityChangedEvent($this->em, $entity, null, []);
+
+        $this->assertNull($entity->getCreatedAt());
+        $this->assertNull($entity->getUpdatedBy());
+        $this->assertNull($entity->getUpdatedAt());
+
+        $listener = new BlamableListener($this->resolver, $this->provider);
+        $listener->entityChanged($event);
+
+        $this->assertNull($entity->getCreatedAt());
+        $this->assertNull($entity->getUpdatedBy());
+        $this->assertNull($entity->getUpdatedAt());
+
+        $listener->entityChanged($event); // cover the case where the blamable cache is already filled.
     }
 }

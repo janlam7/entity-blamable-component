@@ -7,6 +7,7 @@ declare(strict_types=1);
 namespace Hostnet\Component\EntityBlamable\Resolver;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Hostnet\Component\EntityBlamable\Attributes\Blamable;
 
 interface BlamableResolverInterface
 {
@@ -15,7 +16,10 @@ interface BlamableResolverInterface
      *
      * @param  EntityManagerInterface $em
      * @param  mixed                  $entity
-     * @return Blamable
+     *
+     * @deprecated Please use the attribute instead.
      */
     public function getBlamableAnnotation(EntityManagerInterface $em, $entity);
+
+    public function getBlamableAttribute(EntityManagerInterface $em, $entity): ?Blamable;
 }
