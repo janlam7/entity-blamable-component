@@ -7,7 +7,6 @@ declare(strict_types=1);
 namespace Hostnet\Component\EntityBlamable\Listener;
 
 use Hostnet\Component\EntityBlamable\Attributes\Blamable;
-use Hostnet\Component\EntityBlamable\Blamable as BlamableAnnotation;
 use Hostnet\Component\EntityTracker\Event\EntityChangedEvent;
 use PHPUnit\Framework\TestCase;
 
@@ -68,8 +67,8 @@ class BlamableListenerTest extends TestCase
 
         $this->resolver
             ->expects($this->once())
-            ->method('getBlamableAnnotation')
-            ->willReturn(new BlamableAnnotation());
+            ->method('getBlamableAttribute')
+            ->willReturn(new Blamable());
 
         $event    = new EntityChangedEvent($this->em, $this->entity, new \stdClass(), []);
         $listener = new BlamableListener($this->resolver, $this->provider);
@@ -108,8 +107,8 @@ class BlamableListenerTest extends TestCase
 
         $this->resolver
             ->expects($this->once())
-            ->method('getBlamableAnnotation')
-            ->willReturn(new BlamableAnnotation());
+            ->method('getBlamableAttribute')
+            ->willReturn(new Blamable());
 
         $event    = new EntityChangedEvent($this->em, $this->entity, null, []);
         $listener = new BlamableListener($this->resolver, $this->provider);
@@ -130,11 +129,6 @@ class BlamableListenerTest extends TestCase
             ->expects($this->once())
             ->method('getUpdatedBy')
             ->willReturn($by);
-
-        $this->resolver
-            ->expects($this->once())
-            ->method('getBlamableAnnotation')
-            ->willReturn(null);
 
         $this->resolver
             ->expects($this->once())
@@ -165,11 +159,6 @@ class BlamableListenerTest extends TestCase
         $this->provider
             ->expects($this->never())
             ->method('getUpdatedBy');
-
-        $this->resolver
-            ->expects($this->once())
-            ->method('getBlamableAnnotation')
-            ->willReturn(null);
 
         $this->resolver
             ->expects($this->once())

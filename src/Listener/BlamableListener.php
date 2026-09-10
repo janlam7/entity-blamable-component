@@ -66,10 +66,6 @@ class BlamableListener
             return $this->save($cached_item, false);
         }
 
-        if (null !== $this->resolver->getBlamableAnnotation($em, $entity)) {
-            return $this->save($cached_item, true);
-        }
-
         if (null !== $this->resolver->getBlamableAttribute($em, $entity)) {
             return $this->save($cached_item, true);
         }
