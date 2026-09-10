@@ -52,7 +52,7 @@ class BlamableListener
 
     private function isBlamable(EntityManagerInterface $em, object $entity): bool
     {
-        $cache_key   = base64_encode('BLAMABLE-' . get_class($entity));
+        $cache_key   = base64_encode('BLAMABLE-' . $entity::class);
         $cached_item = $this->is_blamable_cache->getItem($cache_key);
 
         if ($cached_item->isHit()) {
