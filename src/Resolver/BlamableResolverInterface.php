@@ -11,5 +11,5 @@ use Hostnet\Component\EntityBlamable\Attributes\Blamable;
 
 interface BlamableResolverInterface
 {
-    public function getBlamableAttribute(EntityManagerInterface $em, $entity): ?Blamable;
+    public function getBlamableAttribute(EntityManagerInterface $em, object $entity): ?Blamable;
 }

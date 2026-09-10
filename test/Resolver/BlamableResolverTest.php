@@ -8,7 +8,6 @@ namespace Hostnet\Component\EntityBlamable\Resolver;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Hostnet\Component\EntityBlamable\Attributes\Blamable;
-use Hostnet\Component\EntityBlamable\Blamable as BlamableAnnotation;
 use Hostnet\Component\EntityTracker\Provider\EntityMetadataProvider;
 use PHPUnit\Framework\TestCase;
 

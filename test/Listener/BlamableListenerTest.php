@@ -19,7 +19,6 @@ class BlamableListenerTest extends TestCase
     private $resolver;
     private $provider;
     private $entity;
-    private $uow;
 
     public function setUp(): void
     {

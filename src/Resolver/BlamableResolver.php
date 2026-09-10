@@ -16,7 +16,7 @@ class BlamableResolver implements BlamableResolverInterface
     {
     }
 
-    public function getBlamableAttribute(EntityManagerInterface $em, $entity): ?Blamable
+    public function getBlamableAttribute(EntityManagerInterface $em, object $entity): ?Blamable
     {
         return $this->provider->getAttributeFromEntity(Blamable::class, $em, $entity);
     }
